@@ -6,6 +6,8 @@ const createScene = async function () {
     const scene = new BABYLON.Scene(engine);
     scene.clearColor = new BABYLON.Color4(0, 0, 0, 1);
 
+    console.log("Creating scene...");
+
     // Enable WebXR (VR Mode)
     const xrHelper = await scene.createDefaultXRExperienceAsync({
         uiOptions: {
@@ -14,6 +16,12 @@ const createScene = async function () {
     });
 
     const xrCamera = xrHelper.baseExperience.camera; // Use XR Camera for movement
+    xrCamera.position.set(0, 1.5, 3); // Ensure camera is positioned correctly
+
+    // Debug WebXR State
+    xrHelper.baseExperience.onStateChangedObservable.add(state => {
+        console.log("WebXR state changed:", state);
+    });
 
     // Lighting
     const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
@@ -37,6 +45,8 @@ const createScene = async function () {
     saw.material = new BABYLON.StandardMaterial("sawMaterial", scene);
     saw.material.diffuseColor = new BABYLON.Color3(0.8, 0.8, 0.8);
 
+    console.log("Objects in current scene:", scene.meshes.map(mesh => mesh.name));
+
     // Detect Controllers
     xrHelper.input.onControllerAddedObservable.add(controller => {
         if (controller.inputSource.handedness === "right") {
@@ -48,6 +58,8 @@ const createScene = async function () {
             // Cutting Interaction:
             controller.onTriggerStateChangedObservable.add(state => {
                 if (state.pressed && saw.intersectsMesh(plank, false)) {
+                    console.log("Plank cutting!");
+
                     // Simulate cutting
                     plank.dispose();
                     let plankLeft = BABYLON.MeshBuilder.CreateBox("plankLeft", { width: 0.7, height: 0.1, depth: 0.3 }, scene);
@@ -67,12 +79,12 @@ const createScene = async function () {
     return scene;
 };
 
-// Create scene
-const scene = createScene();
-
-// Render loop
-engine.runRenderLoop(() => {
-    scene.then(scene => scene.render());
+// Create/render scene
+createScene().then(scene => {
+    console.log("Scene successfully created!");
+    engine.runRenderLoop(() => {
+        scene.render();
+    });
 });
 
 // Resize handling
