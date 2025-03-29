@@ -1,93 +1,78 @@
 const canvas = document.getElementById("renderCanvas");
 const engine = new BABYLON.Engine(canvas, true);
 
-// Create scene
-const createScene = async function () {
+const createScene = async function() {
     const scene = new BABYLON.Scene(engine);
-    scene.clearColor = new BABYLON.Color4(0, 0, 0, 1);
-
-    console.log("Creating scene...");
-
-    // Enable WebXR (VR Mode)
-    const xrHelper = await scene.createDefaultXRExperienceAsync({
-        uiOptions: {
-            sessionMode: "immersive-vr",
-        },
-    });
-
-    const xrCamera = xrHelper.baseExperience.camera; // Use XR Camera for movement
-    xrCamera.position.set(0, 1.5, 3); // Ensure camera is positioned correctly
-
-    // Debug WebXR State
-    xrHelper.baseExperience.onStateChangedObservable.add(state => {
-        console.log("WebXR state changed:", state);
-    });
+    
+    // Camera setup
+    const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 3, 10, new BABYLON.Vector3(0, 1, 0), scene);
+    camera.attachControl(canvas, true);
 
     // Lighting
     const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
-    light.intensity = 1;
+    light.intensity = 0.8;
 
-    // Ground
+    // Create ground
     const ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 10, height: 10 }, scene);
-    const groundMaterial = new BABYLON.StandardMaterial("groundMaterial", scene);
-    groundMaterial.diffuseColor = new BABYLON.Color3(0.3, 0.2, 0.1);
-    ground.material = groundMaterial;
 
-    // Plank
-    let plank = BABYLON.MeshBuilder.CreateBox("plank", { width: 1.5, height: 0.1, depth: 0.3 }, scene);
-    plank.position.y = 0.05;
-    plank.material = new BABYLON.StandardMaterial("plankMaterial", scene);
-    plank.material.diffuseColor = new BABYLON.Color3(0.7, 0.5, 0.3);
+    // Create plank
+    let plank = BABYLON.MeshBuilder.CreateBox("plank", { width: 2, height: 0.1, depth: 0.5 }, scene);
+    plank.position.y = 1;
+    plank.material = new BABYLON.StandardMaterial("plankMat", scene);
+    plankMat.diffuseColor = new BABYLON.Color3(0.76, 0.60, 0.42);
 
-    // Saw
-    let saw = BABYLON.MeshBuilder.CreateBox("saw", { width: 0.3, height: 0.05, depth: 0.5 }, scene);
-    saw.position.set(0, 1.5, -1);
-    saw.material = new BABYLON.StandardMaterial("sawMaterial", scene);
-    saw.material.diffuseColor = new BABYLON.Color3(0.8, 0.8, 0.8);
+    // Enable WebXR VR
+    const xr = await scene.createDefaultXRExperienceAsync({
+        uiOptions: {
+            sessionMode: "immersive-vr"
+        },
+        optionalFeatures: true
+    });
 
-    console.log("Objects in current scene:", scene.meshes.map(mesh => mesh.name));
+    // XR input handling
+    const xrInput = xr.input;
 
-    // Detect Controllers
-    xrHelper.input.onControllerAddedObservable.add(controller => {
-        if (controller.inputSource.handedness === "right") {
-            // Attach saw to right controller
-            controller.onMotionControllerInitObservable.add(motionController => {
-                saw.parent = controller.grip; // Saw moves with VR
-            });
-
-            // Cutting Interaction:
-            controller.onTriggerStateChangedObservable.add(state => {
-                if (state.pressed && saw.intersectsMesh(plank, false)) {
-                    console.log("Plank cutting!");
-
-                    // Simulate cutting
-                    plank.dispose();
-                    let plankLeft = BABYLON.MeshBuilder.CreateBox("plankLeft", { width: 0.7, height: 0.1, depth: 0.3 }, scene);
-                    plankLeft.position.set(-0.4, 0.05, 0);
-                    plankLeft.material = new BABYLON.StandardMaterial("plankMaterial", scene);
-                    plankLeft.material.diffuseColor = new BABYLON.Color3(0.7, 0.5, 0.3);
-
-                    let plankRight = BABYLON.MeshBuilder.CreateBox("plankRight", { width: 0.7, height: 0.1, depth: 0.3 }, scene);
-                    plankRight.position.set(0.4, 0.05, 0);
-                    plankRight.material = new BABYLON.StandardMaterial("plankMaterial", scene);
-                    plankRight.material.diffuseColor = new BABYLON.Color3(0.7, 0.5, 0.3);
+    // Cutting mechanic
+    xrInput.onControllerAddedObservable.add(controller => {
+        const laser = controller.motionController?.getComponent("xr-standard-trigger");
+        
+        if (laser) {
+            laser.onButtonStateChangedObservable.add((state) => {
+                if (state.pressed) {
+                    attemptCut(plank, controller.grip.position);
                 }
             });
         }
     });
 
+    // Function to cut plank
+    function attemptCut(plank, cutPosition) {
+        const localCutX = cutPosition.x - plank.position.x;
+        
+        if (Math.abs(localCutX) > plank.scaling.x / 2) return;
+
+        // Create plank
+        const leftPlank = plank.clone("leftPlank");
+        leftPlank.scaling.x = Math.abs(localCutX);
+        leftPlank.position.x = plank.position.x - (plank.scaling.x - leftPlank.scaling.x) / 2;
+
+        const rightPlank = plank.clone("rightPlank");
+        rightPlank.scaling.x = plank.scaling.x - leftPlank.scaling.x;
+        rightPlank.position.x = plank.position.x + (rightPlank.scaling.x / 2);
+
+        // Remove plank
+        plank.dispose();
+    }
+
     return scene;
 };
 
-// Create/render scene
+// Render loop
 createScene().then(scene => {
-    console.log("Scene successfully created!");
-    engine.runRenderLoop(() => {
-        scene.render();
-    });
+    engine.runRenderLoop(() => scene.render());
 });
 
-// Resize handling
+// Resize event
 window.addEventListener("resize", () => {
     engine.resize();
 });
