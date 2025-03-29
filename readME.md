@@ -4,8 +4,8 @@ A WebXR-based construction training simulator built with Babylon.js to teach ess
 
 📌 Features
 
-WebXR Support (VR/AR-ready)
-Real-time Wood Cutting Interaction
+WebXR Support (VR)
+Real-time Wood Cutting Interaction (Soon to add wire connecting & hammering)
 3D Environment with Physics
 Cross-device Compatibility (Desktop, Mobile, VR Headsets)
 Babylon.js Engine for smooth rendering
