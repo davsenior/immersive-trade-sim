@@ -21,7 +21,7 @@ const createScene = async function () {
     ground.material = groundMaterial;
 
     // Create Plank
-    const plank = BABYLON.MeshBuilder.CreateBox("plank", { width: 1.5, height: 0.1, depth: 0.3 }, scene);
+    let plank = BABYLON.MeshBuilder.CreateBox("plank", { width: 1.5, height: 0.1, depth: 0.3 }, scene);
     plank.position.y = 0.05;
     plank.material = new BABYLON.StandardMaterial("plankMaterial", scene);
     plank.material.diffuseColor = new BABYLON.Color3(0.7, 0.5, 0.3);
@@ -33,39 +33,33 @@ const createScene = async function () {
         },
     });
 
-    // Enable interaction features
-    const featureManager = xrHelper.baseExperience.featuresManager;
-    const teleportation = featureManager.enableFeature(BABYLON.WebXRMotionControllerTeleportation);
-    const pointerSelection = featureManager.enableFeature(BABYLON.WebXRControllerPointerSelection);
+    // Cutting function
+    function cutPlank() {
+        if (!plank) return;
 
-    // Grab & Drop functionality
-    let grabbedObject = null;
-    pointerSelection.onSelectObservable.add((eventData) => {
-        if (!grabbedObject) {
-            grabbedObject = plank; // Grab plank
-            grabbedObject.setParent(eventData.grabber);
-        } else {
-            grabbedObject.setParent(null); // Release plank
-            grabbedObject = null;
-        }
-    });
+        // Create two halves
+        let leftPart = BABYLON.MeshBuilder.CreateBox("leftPlank", { width: 0.75, height: 0.1, depth: 0.3 }, scene);
+        let rightPart = BABYLON.MeshBuilder.CreateBox("rightPlank", { width: 0.75, height: 0.1, depth: 0.3 }, scene);
 
-    // Cutting
-    pointerSelection.onSelectObservable.add((eventData) => {
-        if (grabbedObject === plank) {
-            const cutPosition = grabbedObject.position.x;
+        // Position where the plank was
+        leftPart.position = plank.position.clone();
+        rightPart.position = plank.position.clone();
+        leftPart.position.x -= 0.375;  // Shift left
+        rightPart.position.x += 0.375; // Shift right
 
-            // Create two halves
-            const plank1 = BABYLON.MeshBuilder.CreateBox("plank1", { width: cutPosition, height: 0.1, depth: 0.3 }, scene);
-            const plank2 = BABYLON.MeshBuilder.CreateBox("plank2", { width: 1.5 - cutPosition, height: 0.1, depth: 0.3 }, scene);
+        // Apply same material
+        leftPart.material = plank.material;
+        rightPart.material = plank.material;
 
-            plank1.material = plank.material;
-            plank2.material = plank.material;
+        // Remove plank
+        plank.dispose();
+        plank = null;
+    }
 
-            plank1.position.set(plank.position.x - cutPosition / 2, plank.position.y, plank.position.z);
-            plank2.position.set(plank.position.x + cutPosition / 2, plank.position.y, plank.position.z);
-
-            plank.dispose();
+    // Cutting trigger
+    window.addEventListener("keydown", (event) => {
+        if (event.code === "Space") {
+            cutPlank();
         }
     });
 
