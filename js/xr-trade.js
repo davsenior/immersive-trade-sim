@@ -4,7 +4,6 @@ const engine = new BABYLON.Engine(canvas, true);
 // Create scene
 const createScene = async function () {
     const scene = new BABYLON.Scene(engine);
-    scene.clearColor = new BABYLON.Color4(0, 0, 0, 1);
 
     // Add camera
     const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, 15, new BABYLON.Vector3(0, 0, 0));
@@ -19,6 +18,10 @@ const createScene = async function () {
     const groundMaterial = new BABYLON.StandardMaterial("groundMaterial", scene);
     groundMaterial.diffuseColor = new BABYLON.Color3(0.3, 0.2, 0.1);
     ground.material = groundMaterial;
+    ground.receiveShadows = true;
+
+    // Create walls
+    const wallMaterial = new BABYLON.StandardMaterial("wallMaterial", scene);
 
     // Create Plank
     const plank = BABYLON.MeshBuilder.CreateBox("plank", { width: 1.5, height: 0.1, depth: 0.3 }, scene);
