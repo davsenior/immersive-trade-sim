@@ -14,46 +14,93 @@ const createScene = async function () {
     const light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);
     light.intensity = 0.7;
 
-    // Create ground
+    // Create ground with grass texture
     const ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 10, height: 10 }, scene);
-    const groundMaterial = new BABYLON.StandardMaterial("groundMaterial", scene);
-    groundMaterial.diffuseColor = new BABYLON.Color3(0.3, 0.2, 0.1);
-    ground.material = groundMaterial;
+    const grassMaterial = new BABYLON.StandardMaterial("grassMaterial", scene);
+    grassMaterial.diffuseTexture = new BABYLON.Texture("https://assets.babylonjs.com/environments/grass.jpg", scene);
+    ground.material = grassMaterial;
     ground.receiveShadows = true;
 
-    // Create walls
+    // Wall material
     const wallMaterial = new BABYLON.StandardMaterial("wallMaterial", scene);
     wallMaterial.diffuseColor = new BABYLON.Color3(0.5, 0.5, 0.5);
-    const wall = BABYLON.MeshBuilder.CreateBox("wall", { width: 0.1, height: 2, depth: 10 }, scene);
-    wall.position.x = -5;
-    wall.position.y = 1;
-    wall.position.z = 0;
-    wall.material = wallMaterial;
-    wall.receiveShadows = true;
 
-    // Create Plank
+    // Wall 1 (left)
+    const wall1 = BABYLON.MeshBuilder.CreateBox("wall1", { width: 0.1, height: 2, depth: 10 }, scene);
+    wall1.position.set(-5, 1, 0);
+    wall1.material = wallMaterial;
+
+    // Wall 2 (right)
+    const wall2 = wall1.clone("wall2");
+    wall2.position.x = 5;
+
+    // Wall 3 (back)
+    const wall3 = BABYLON.MeshBuilder.CreateBox("wall3", { width: 10, height: 2, depth: 0.1 }, scene);
+    wall3.position.set(0, 1, -5);
+    wall3.material = wallMaterial;
+
+    // Cutting table
+    const tableMat = new BABYLON.StandardMaterial("tableMat", scene);
+    tableMat.diffuseTexture = new BABYLON.Texture("https://assets.babylonjs.com/environments/wood.jpg", scene);
+
+    const tableTop = BABYLON.MeshBuilder.CreateBox("tableTop", { width: 2, height: 0.1, depth: 1 }, scene);
+    tableTop.position.y = 0.75;
+    tableTop.material = tableMat;
+
+    // Table legs
+    const legHeight = 0.75;
+    const legSize = 0.1;
+    const createLeg = (x, z) => {
+        const leg = BABYLON.MeshBuilder.CreateBox("leg", { width: legSize, height: legHeight, depth: legSize }, scene);
+        leg.position.set(x, legHeight / 2, z);
+        leg.material = tableMat;
+    };
+    createLeg(-0.9, -0.4);
+    createLeg(0.9, -0.4);
+    createLeg(-0.9, 0.4);
+    createLeg(0.9, 0.4);
+
+    // Support
+    const support = BABYLON.MeshBuilder.CreateBox("support", { width: 2, height: 0.05, depth: 0.1 }, scene);
+    support.position.set(0, 0.4, 0);
+    support.material = tableMat;
+
+    // Plank on table
     const plank = BABYLON.MeshBuilder.CreateBox("plank", { width: 1.5, height: 0.1, depth: 0.3 }, scene);
-    plank.position.y = 0.05;
+    plank.position.set(0, 0.8, 0);
     plank.material = new BABYLON.StandardMaterial("plankMaterial", scene);
     plank.material.diffuseColor = new BABYLON.Color3(0.7, 0.5, 0.3);
+
+    // Cutting tool (saw)
+    const saw = BABYLON.MeshBuilder.CreateBox("saw", { width: 0.1, height: 0.05, depth: 0.5 }, scene);
+    saw.material = new BABYLON.StandardMaterial("sawMaterial", scene);
+    saw.material.diffuseColor = new BABYLON.Color3(0.7, 0.7, 0.7);
+    saw.position.set(0, 1, 1);
 
     // Enable WebXR (VR)
     const xrHelper = await scene.createDefaultXRExperienceAsync({
         uiOptions: { sessionMode: "immersive-vr" },
     });
 
-    // WebXR Input for grabbing objects
+    // Input for grabbing plank and saw
     xrHelper.input.onControllerAddedObservable.add((controller) => {
         const motionController = controller.motionController;
         if (motionController) {
             const selectComponent = motionController.getComponent("xr-standard-trigger");
 
-            // When trigger is pressed, attach the plank to the controller
             selectComponent.onButtonStateChangedObservable.add(() => {
                 if (selectComponent.pressed) {
-                    plank.setParent(controller.grip); // Attach plank to controller
+                    const distanceToPlank = BABYLON.Vector3.Distance(controller.grip.position, plank.position);
+                    const distanceToSaw = BABYLON.Vector3.Distance(controller.grip.position, saw.position);
+
+                    if (distanceToPlank < 0.5) {
+                        plank.setParent(controller.grip);
+                    } else if (distanceToSaw < 0.5) {
+                        saw.setParent(controller.grip);
+                    }
                 } else {
-                    plank.setParent(null); // Release plank
+                    plank.setParent(null);
+                    saw.setParent(null);
                 }
             });
         }
@@ -64,13 +111,9 @@ const createScene = async function () {
 
 // Create scene
 const scene = createScene();
-
-// Render loop
 engine.runRenderLoop(() => {
     scene.then(scene => scene.render());
 });
-
-// Resize handling
 window.addEventListener("resize", () => {
     engine.resize();
 });
