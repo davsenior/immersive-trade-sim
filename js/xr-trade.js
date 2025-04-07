@@ -17,7 +17,7 @@ const createScene = async function () {
     // Create ground with grass texture
     const ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 10, height: 10 }, scene);
     const grassMaterial = new BABYLON.StandardMaterial("grassMaterial", scene);
-    grassMaterial.diffuseTexture = new BABYLON.Texture("https://assets.babylonjs.com/environments/grass.jpg", scene);
+    grassMaterial.diffuseTexture = new BABYLON.Texture("https://assets.babylonjs.com/textures/grass.png", scene);
     ground.material = grassMaterial;
     ground.receiveShadows = true;
 
@@ -41,7 +41,7 @@ const createScene = async function () {
 
     // Cutting table
     const tableMat = new BABYLON.StandardMaterial("tableMat", scene);
-    tableMat.diffuseTexture = new BABYLON.Texture("https://assets.babylonjs.com/environments/wood.jpg", scene);
+    tableMat.diffuseTexture = new BABYLON.Texture("https://assets.babylonjs.com/textures/wood.jpg", scene);
 
     const tableTop = BABYLON.MeshBuilder.CreateBox("tableTop", { width: 2, height: 0.1, depth: 1 }, scene);
     tableTop.position.y = 0.75;
