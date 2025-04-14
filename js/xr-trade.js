@@ -110,9 +110,10 @@ const createScene = async function () {
 };
 
 // Create scene
-const scene = createScene();
-engine.runRenderLoop(() => {
-    scene.then(scene => scene.render());
+createScene().then((scene) => {
+    engine.runRenderLoop(() => {
+        scene.render();
+    });
 });
 window.addEventListener("resize", () => {
     engine.resize();
