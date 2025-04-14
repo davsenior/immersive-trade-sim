@@ -33,32 +33,62 @@ const createScene = async function () {
     ground.material = grassMaterial;
     ground.receiveShadows = true;
 
-    // Table Material
-    const tableMat = new BABYLON.StandardMaterial("tableMat", scene);
-    tableMat.diffuseTexture = new BABYLON.Texture("https://assets.babylonjs.com/textures/wood.jpg", scene);
+    // Workbench Material
+    const workbenchMaterial = new BABYLON.StandardMaterial("workbenchMaterial", scene);
+    workbenchMaterial.diffuseTexture = new BABYLON.Texture("https://assets.babylonjs.com/textures/wood.jpg", scene);
 
-    // Table Top
-    const tableTop = BABYLON.MeshBuilder.CreateBox("tableTop", { width: 2, height: 0.2, depth: 1 }, scene);
-    tableTop.position.y = 0.9;
-    tableTop.material = tableMat;
+    // Workbench Top
+    const workbenchTop = BABYLON.MeshBuilder.CreateBox("workbenchTop", { width: 3, height: 0.3, depth: 1.5 }, scene);
+    workbenchTop.position.y = 1.2;
+    workbenchTop.material = workbenchMaterial;
 
-    // Table Legs
-    const legHeight = 0.9;
+    // Workbench Legs
+    const legHeight = 1.2;
     const legSize = 0.2;
     const createLeg = (x, z) => {
         const leg = BABYLON.MeshBuilder.CreateBox("leg", { width: legSize, height: legHeight, depth: legSize }, scene);
         leg.position.set(x, legHeight / 2, z);
-        leg.material = tableMat;
+        leg.material = new BABYLON.StandardMaterial("metalMat", scene);
+        leg.material.diffuseColor = new BABYLON.Color3(0.5, 0.5, 0.5);
     };
-    createLeg(-0.9, -0.4);
-    createLeg(0.9, -0.4);
-    createLeg(-0.9, 0.4);
-    createLeg(0.9, 0.4);
+    createLeg(-1.4, -0.65);
+    createLeg(1.4, -0.65);
+    createLeg(-1.4, 0.65);
+    createLeg(1.4, 0.65);
 
-    // Table Support (Back Brace)
-    const support = BABYLON.MeshBuilder.CreateBox("support", { width: 2, height: 0.05, depth: 0.1 }, scene);
-    support.position.set(0, 0.3, -0.45);
-    support.material = tableMat;
+    // Back Support for the Workbench
+    const backSupport = BABYLON.MeshBuilder.CreateBox("backSupport", { width: 3, height: 0.05, depth: 0.2 }, scene);
+    backSupport.position.set(0, 1.6, -0.75);
+    backSupport.material = workbenchMaterial;
+
+    // Metal Vise
+    const viseBody = BABYLON.MeshBuilder.CreateBox("viseBody", {
+        width: 0.2,
+        height: 0.1,
+        depth: 0.4
+    }, scene);
+    viseBody.position.set(1.2, 1.1, 0);
+    const metalMat = new BABYLON.StandardMaterial("metalMat", scene);
+    metalMat.diffuseColor = new BABYLON.Color3(0.4, 0.4, 0.4);
+    viseBody.material = metalMat;
+
+    // Vise Jaw
+    const viseJaw = BABYLON.MeshBuilder.CreateBox("viseJaw", {
+        width: 0.05,
+        height: 0.1,
+        depth: 0.4
+    }, scene);
+    viseJaw.position.set(1.28, 1.1, 0);
+    viseJaw.material = metalMat;
+
+    // Vise Handle 
+    const viseHandle = BABYLON.MeshBuilder.CreateCylinder("viseHandle", {
+        diameter: 0.02,
+        height: 0.4
+    }, scene);
+    viseHandle.rotation.z = Math.PI / 2;
+    viseHandle.position.set(1.25, 1.05, 0);
+    viseHandle.material = metalMat;
 
     // Saw
     const saw = BABYLON.MeshBuilder.CreateBox("saw", { width: 0.1, height: 0.05, depth: 0.5 }, scene);
