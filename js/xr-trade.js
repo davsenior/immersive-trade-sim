@@ -6,6 +6,16 @@ const createScene = async function () {
     const scene = new BABYLON.Scene(engine);
     scene.clearColor = new BABYLON.Color3(0.5, 0.5, 0.5);
 
+    const skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 1000.0 }, scene);
+    const skyboxMaterial = new BABYLON.StandardMaterial("skyBoxMaterial", scene);
+    skyboxMaterial.backFaceCulling = false;
+    skyboxMaterial.disableLighting = true;
+    skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
+    skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
+    skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture("https://playground.babylonjs.com/textures/skybox", scene);
+    skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
+    skybox.material = skyboxMaterial;
+
     // Add camera
     const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, 15, new BABYLON.Vector3(0, 0, 0));
     camera.attachControl(canvas, true);
@@ -20,24 +30,6 @@ const createScene = async function () {
     grassMaterial.diffuseTexture = new BABYLON.Texture("https://assets.babylonjs.com/textures/grass.png", scene);
     ground.material = grassMaterial;
     ground.receiveShadows = true;
-
-    // Wall material
-    const wallMaterial = new BABYLON.StandardMaterial("wallMaterial", scene);
-    wallMaterial.diffuseColor = new BABYLON.Color3(0.5, 0.5, 0.5);
-
-    // Wall 1 (left)
-    const wall1 = BABYLON.MeshBuilder.CreateBox("wall1", { width: 0.1, height: 2, depth: 10 }, scene);
-    wall1.position.set(-5, 1, 0);
-    wall1.material = wallMaterial;
-
-    // Wall 2 (right)
-    const wall2 = wall1.clone("wall2");
-    wall2.position.x = 5;
-
-    // Wall 3 (back)
-    const wall3 = BABYLON.MeshBuilder.CreateBox("wall3", { width: 10, height: 2, depth: 0.1 }, scene);
-    wall3.position.set(0, 1, -5);
-    wall3.material = wallMaterial;
 
     // Cutting table
     const tableMat = new BABYLON.StandardMaterial("tableMat", scene);
