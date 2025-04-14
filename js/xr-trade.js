@@ -82,6 +82,15 @@ const createScene = async function () {
         uiOptions: { sessionMode: "immersive-vr" },
     });
 
+    xrHelper.teleportation = await xrHelper.baseExperience.featuresManager.enableFeature(
+        BABYLON.WebXRFeatureName.TELEPORTATION,
+        "latest",
+        {
+            xrInput: xrHelper.input,
+            floorMeshes: [ground],
+        }
+    );
+
     // Input for grabbing plank and saw
     xrHelper.input.onControllerAddedObservable.add((controller) => {
         const motionController = controller.motionController;
