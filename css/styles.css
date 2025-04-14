@@ -11,12 +11,19 @@ canvas {
 
 h1 {
     position: absolute;
-    top: 20px;
-    width: 100%;
-    text-align: center;
-    color: rgb(188, 77, 71);
-    font-size: 2rem;
-    font-family: sans-serif;
+    top: 10%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-50%);
+    color: white;
+    font-size: 3rem;
+    font-family: 'Arial', sans-serif;
     z-index: 1;
     pointer-events: none;
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
+    opacity: 0.8;
+    transition: opacity 0.3s ease-in-out;
+}
+
+h1:hover {
+    opacity: 1;
 }
