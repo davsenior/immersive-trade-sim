@@ -26,33 +26,12 @@ const createScene = async function () {
 
     // Ground
     const ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 1000, height: 1000 }, scene);
-    const concreteMaterial = new BABYLON.StandardMaterial("concreteMaterial", scene);
-    concreteMaterial.diffuseTexture = new BABYLON.Texture("https://assets.babylonjs.com/environments/concretetile.jpg", scene);
-    concreteMaterial.diffuseTexture.uScale = 100;
-    concreteMaterial.diffuseTexture.vScale = 100;
-    ground.material = concreteMaterial;
+    const grassMaterial = new BABYLON.StandardMaterial("grassMaterial", scene);
+    grassMaterial.diffuseTexture = new BABYLON.Texture("https://assets.babylonjs.com/textures/grass.png", scene);
+    grassMaterial.diffuseTexture.uScale = 100;
+    grassMaterial.diffuseTexture.vScale = 100;
+    ground.material = grassMaterial;
     ground.receiveShadows = true;
-
-    // Construction Barrier
-    const barrier = BABYLON.MeshBuilder.CreateBox("barrier", { width: 2, height: 1, depth: 0.1 }, scene);
-    barrier.position.set(-4, 0.5, 4);
-    const barrierMat = new BABYLON.StandardMaterial("barrierMat", scene);
-    barrierMat.diffuseTexture = new BABYLON.Texture("https://i.imgur.com/MWtxHjY.png", scene); // Orange/white striped
-    barrier.material = barrierMat;
-
-    // Traffic Cones
-    const coneMat = new BABYLON.StandardMaterial("coneMat", scene);
-    coneMat.diffuseColor = new BABYLON.Color3(1, 0.5, 0); // Orange color
-    for (let i = 0; i < 3; i++) {
-        const cone = BABYLON.MeshBuilder.CreateCylinder(`cone${i}`, {
-            diameterTop: 0,
-            diameterBottom: 0.3,
-            height: 0.6,
-            tessellation: 16
-        }, scene);
-        cone.position.set(-2 + i * 1, 0.3, -4);
-        cone.material = coneMat;
-    }
 
     // Table Material
     const tableMat = new BABYLON.StandardMaterial("tableMat", scene);
