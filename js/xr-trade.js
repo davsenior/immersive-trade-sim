@@ -66,14 +66,14 @@ const createScene = async function () {
     saw.material.diffuseColor = new BABYLON.Color3(0.7, 0.7, 0.7);
     saw.position.set(0, 1, 1);
 
-    // Wood Pile — You grab wood and place it on the table
+    // Wood Pile
     const plankMaterial = new BABYLON.StandardMaterial("plankMaterial", scene);
     plankMaterial.diffuseColor = new BABYLON.Color3(0.7, 0.5, 0.3);
 
     const woodPile = [];
     for (let i = 0; i < 5; i++) {
         const plank = BABYLON.MeshBuilder.CreateBox("plank" + i, { width: 1.5, height: 0.1, depth: 0.3 }, scene);
-        plank.position.set(-3 + i * 0.4, 0.1 + i * 0.12, -2); // stacked effect
+        plank.position.set(-3 + i * 0.4, 0.1 + i * 0.12, -2);
         plank.material = plankMaterial;
         woodPile.push(plank);
     }

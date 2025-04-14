@@ -16,7 +16,7 @@ h1 {
     transform: translateX(-50%) translateY(-50%);
     color: rgb(177, 85, 85);
     font-size: 3rem;
-    font-family: 'Arial', sans-serif;
+    font-family: 'Copperplate', fantasy;
     z-index: 1;
     pointer-events: none;
     text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
