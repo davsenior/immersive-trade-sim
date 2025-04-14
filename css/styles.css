@@ -14,7 +14,7 @@ h1 {
     top: 10%;
     left: 50%;
     transform: translateX(-50%) translateY(-50%);
-    color: white;
+    color: rgb(177, 85, 85);
     font-size: 3rem;
     font-family: 'Arial', sans-serif;
     z-index: 1;
