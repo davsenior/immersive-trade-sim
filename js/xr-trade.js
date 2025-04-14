@@ -25,9 +25,11 @@ const createScene = async function () {
     light.intensity = 0.7;
 
     // Create ground with grass texture
-    const ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 10, height: 10 }, scene);
+    const ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 1000, height: 1000 }, scene);
     const grassMaterial = new BABYLON.StandardMaterial("grassMaterial", scene);
     grassMaterial.diffuseTexture = new BABYLON.Texture("https://assets.babylonjs.com/textures/grass.png", scene);
+    grassMaterial.diffuseTexture.uScale = 100;
+    grassMaterial.diffuseTexture.vScale = 100;
     ground.material = grassMaterial;
     ground.receiveShadows = true;
 
