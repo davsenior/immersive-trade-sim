@@ -91,25 +91,35 @@ const createScene = async function () {
         }
     );
 
-    // Input for grabbing plank and saw
+    // Grabbing plank and saw
     xrHelper.input.onControllerAddedObservable.add((controller) => {
         const motionController = controller.motionController;
-        if (motionController) {
-            const selectComponent = motionController.getComponent("xr-standard-trigger");
+        const grip = controller.grip;
 
-            selectComponent.onButtonStateChangedObservable.add(() => {
-                if (selectComponent.pressed) {
-                    const distanceToPlank = BABYLON.Vector3.Distance(controller.grip.position, plank.position);
-                    const distanceToSaw = BABYLON.Vector3.Distance(controller.grip.position, saw.position);
+        if (motionController && grip) {
+            const trigger = motionController.getComponent("xr-standard-trigger");
 
-                    if (distanceToPlank < 0.5) {
-                        plank.setParent(controller.grip);
-                    } else if (distanceToSaw < 0.5) {
-                        saw.setParent(controller.grip);
+            let heldMesh = null;
+
+            trigger.onButtonStateChangedObservable.add(() => {
+                if (trigger.pressed) {
+                    if (!heldMesh) {
+                        const distToPlank = BABYLON.Vector3.Distance(grip.position, plank.position);
+                        const distToSaw = BABYLON.Vector3.Distance(grip.position, saw.position);
+
+                        if (distToPlank < 0.5) {
+                            plank.setParent(grip);
+                            heldMesh = plank;
+                        } else if (distToSaw < 0.5) {
+                            saw.setParent(grip);
+                            heldMesh = saw;
+                        }
                     }
                 } else {
-                    plank.setParent(null);
-                    saw.setParent(null);
+                    if (heldMesh) {
+                        heldMesh.setParent(null);
+                        heldMesh = null;
+                    }
                 }
             });
         }
