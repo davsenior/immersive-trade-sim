@@ -1,121 +1,240 @@
-import {
-    Engine,
-    Scene,
-    ArcRotateCamera,
-    HemisphericLight,
-    Vector3,
-    MeshBuilder,
-    Color3,
-    StandardMaterial,
-    WebXRDefaultExperience
-} from "@babylonjs/core";
-import "@babylonjs/loaders";
-
 const canvas = document.getElementById("renderCanvas");
-const engine = new Engine(canvas, true);
-const scene = new Scene(engine);
+const engine = new BABYLON.Engine(canvas, true);
 
-// Camera / lighting
-const camera = new ArcRotateCamera("camera", Math.PI / 2, Math.PI / 4, 10, Vector3.Zero(), scene);
-camera.attachControl(canvas, true);
+const createScene = async function () {
+    const scene = new BABYLON.Scene(engine);
+    scene.clearColor = new BABYLON.Color3(0.5, 0.5, 0.5);
 
-const light = new HemisphericLight("light", new Vector3(0, 1, 0), scene);
-light.intensity = 0.7;
+    // Skybox
+    const skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 1000.0 }, scene);
+    const skyboxMaterial = new BABYLON.StandardMaterial("skyBoxMaterial", scene);
+    skyboxMaterial.backFaceCulling = false;
+    skyboxMaterial.disableLighting = true;
+    skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
+    skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
+    skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture("https://playground.babylonjs.com/textures/skybox", scene);
+    skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
+    skybox.material = skyboxMaterial;
 
-// Skybox
-const skybox = MeshBuilder.CreateBox("skyBox", { size: 1000.0 }, scene);
-const skyboxMaterial = new StandardMaterial("skyBoxMaterial", scene);
-skyboxMaterial.backFaceCulling = false;
-skyboxMaterial.diffuseColor = new Color3(0, 0, 0);
-skyboxMaterial.specularColor = new Color3(0, 0, 0);
-skyboxMaterial.emissiveColor = new Color3(0.1, 0.3, 0.1);
-skybox.material = skyboxMaterial;
+    // Camera
+    const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, 15, new BABYLON.Vector3(0, 0, 0), scene);
+    camera.attachControl(canvas, true);
 
-// Walls
-const walls = [];
-for (let i = 0; i < 3; i++) {
-    const wall = MeshBuilder.CreateBox("wall" + i, { height: 3, width: 10, depth: 0.1 }, scene);
-    wall.position.y = 1.5;
-    wall.material = new StandardMaterial("wallMat", scene);
-    wall.material.diffuseColor = new Color3(0.5, 0.8, 0.5); // green
-    walls.push(wall);
-}
-walls[0].position.z = -5;
-walls[1].position.x = -5;
-walls[1].rotation.y = Math.PI / 2;
-walls[2].position.x = 5;
-walls[2].rotation.y = Math.PI / 2;
+    // Light
+    const light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);
+    light.intensity = 0.7;
 
-// Plank
-const plank = MeshBuilder.CreateBox("plank", { height: 0.1, width: 1, depth: 2 }, scene);
-plank.position = new Vector3(0, 1.55, 0);
-plank.material = new StandardMaterial("plankMat", scene);
-plank.material.diffuseColor = new Color3(0.76, 0.60, 0.42);
+    // Ground
+    const ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 1000, height: 1000 }, scene);
+    const grassMaterial = new BABYLON.StandardMaterial("grassMaterial", scene);
+    grassMaterial.diffuseTexture = new BABYLON.Texture("https://assets.babylonjs.com/textures/grass.png", scene);
+    grassMaterial.diffuseTexture.uScale = 100;
+    grassMaterial.diffuseTexture.vScale = 100;
+    ground.material = grassMaterial;
+    ground.receiveShadows = true;
 
-// Cutting table
-const cuttingTable = MeshBuilder.CreateBox("cuttingTable", { height: 1, width: 2, depth: 2 }, scene);
-cuttingTable.position = new Vector3(0, 0.5, 0);
-cuttingTable.material = new StandardMaterial("tableMat", scene);
-cuttingTable.material.diffuseColor = new Color3(0.4, 0.2, 0.1);
+    // Table material
+    const tableMat = new BABYLON.StandardMaterial("tableMat", scene);
+    tableMat.diffuseTexture = new BABYLON.Texture("https://assets.babylonjs.com/textures/wood.jpg", scene);
 
-// Saw object for cutting
-function createSaw() {
-    const saw = MeshBuilder.CreateBox("saw", { height: 0.1, width: 0.3, depth: 0.8 }, scene);
-    saw.position = new Vector3(0, 1.6, 0.5);
-    const sawMat = new StandardMaterial("sawMat", scene);
-    sawMat.diffuseColor = new Color3(0.5, 0.5, 0.5);
-    saw.material = sawMat;
-    return saw;
-}
-const saw = createSaw();
+    // Station creation
+    function createStation(scene, name, position, titleText) {
+        const station = new BABYLON.TransformNode(name, scene);
+        station.position = position;
 
-// Other stations
-function createStation(name, position, color) {
-    const table = MeshBuilder.CreateBox(name + "Table", { height: 1, width: 2, depth: 2 }, scene);
-    table.position = position;
-    table.material = new StandardMaterial(name + "Mat", scene);
-    table.material.diffuseColor = color;
+        const titlePlane = BABYLON.MeshBuilder.CreatePlane(`${name}_title`, { width: 2, height: 0.5 }, scene);
+        titlePlane.position = new BABYLON.Vector3(0, 2.5, 0);
+        titlePlane.parent = station;
 
-    const label = MeshBuilder.CreatePlane(name + "Label", { width: 1.5, height: 0.5 }, scene);
-    label.position = new Vector3(position.x, position.y + 1.2, position.z);
-    label.rotation = new Vector3(0, 0, 0);
-    const labelMat = new StandardMaterial(name + "LabelMat", scene);
-    labelMat.diffuseColor = color;
-    label.material = labelMat;
-}
-createStation("hammering", new Vector3(3, 0.5, 3), new Color3(0.6, 0.3, 0.1));
-createStation("wiring", new Vector3(-3, 0.5, 3), new Color3(0.3, 0.3, 0.6));
+        const titleMat = new BABYLON.StandardMaterial(`${name}_mat`, scene);
+        const dynamicTexture = new BABYLON.DynamicTexture(`${name}_textTex`, { width: 512, height: 256 }, scene, true);
+        dynamicTexture.drawText(titleText, 50, 150, "bold 60px Arial", "white", "transparent", true);
+        titleMat.diffuseTexture = dynamicTexture;
+        titlePlane.material = titleMat;
 
-// WebXR
-WebXRDefaultExperience.CreateAsync(scene, {
-    floorMeshes: [cuttingTable],
-    disableTeleportation: false
-}).then((xrHelper) => {
-    const teleportation = xrHelper.teleportation;
-    teleportation.addFloorMesh(cuttingTable);
+        return station;
+    }
 
+    // Training stations
+    const woodStation = createStation(scene, "woodStation", new BABYLON.Vector3(0, 0, 0), "Wood Cutting");
+    const wiringStation = createStation(scene, "wiringStation", new BABYLON.Vector3(8, 0, 0), "Wiring Test");
+    const hammerStation = createStation(scene, "hammerStation", new BABYLON.Vector3(-8, 0, 0), "Nail Hammering");
+
+    // Cutting table
+    const tableTop = BABYLON.MeshBuilder.CreateBox("tableTop", { width: 2, height: 0.2, depth: 1 }, scene);
+    tableTop.position.set(0, 0.9, 0);
+    tableTop.material = tableMat;
+    tableTop.parent = woodStation;
+
+    // Table legs
+    const legHeight = 0.9;
+    const legSize = 0.2;
+    const createLeg = (x, z) => {
+        const leg = BABYLON.MeshBuilder.CreateBox("leg", { width: legSize, height: legHeight, depth: legSize }, scene);
+        leg.position.set(x, legHeight / 2, z);
+        leg.material = tableMat;
+        leg.parent = woodStation;
+    };
+    createLeg(-0.9, -0.4);
+    createLeg(0.9, -0.4);
+    createLeg(-0.9, 0.4);
+    createLeg(0.9, 0.4);
+
+    // Saw blade
+    const blade = BABYLON.MeshBuilder.CreateBox("blade", { width: 0.05, height: 0.05, depth: 0.5 }, scene);
+    blade.material = new BABYLON.StandardMaterial("bladeMat", scene);
+    blade.material.diffuseColor = new BABYLON.Color3(0.8, 0.8, 0.8);
+    blade.position.set(0, 1.1, 1);
+    blade.parent = woodStation;
+
+    // Saw handle
+    const handle = BABYLON.MeshBuilder.CreateBox("handle", { width: 0.1, height: 0.1, depth: 0.2 }, scene);
+    handle.material = new BABYLON.StandardMaterial("handleMat", scene);
+    handle.material.diffuseColor = new BABYLON.Color3(0.2, 0.1, 0.05);
+    handle.position.set(0, -0.05, -0.15);
+    handle.parent = blade;
+
+    // Plank material
+    const plankMaterial = new BABYLON.StandardMaterial("plankMaterial", scene);
+    plankMaterial.diffuseColor = new BABYLON.Color3(0.7, 0.5, 0.3);
+
+    // Wood pile
+    const woodPile = [];
+    for (let row = 0; row < 2; row++) {
+        for (let col = 0; col < 3; col++) {
+            const index = row * 3 + col;
+            const plank = BABYLON.MeshBuilder.CreateBox("plank" + index, { width: 1.5, height: 0.1, depth: 0.3 }, scene);
+            plank.position.set(-3 + col * 1.6, 0.05 + row * 0.12, -2);
+            plank.material = plankMaterial;
+            plank.parent = woodStation;
+            woodPile.push(plank);
+        }
+    }
+
+    // Wiring cylinder
+    const wire = BABYLON.MeshBuilder.CreateCylinder("wire", { height: 1, diameter: 0.05 }, scene);
+    wire.material = new BABYLON.StandardMaterial("wireMat", scene);
+    wire.material.diffuseColor = new BABYLON.Color3(0.1, 0.1, 0.1);
+    wire.position.set(8, 1, 0);
+    wire.parent = wiringStation;
+
+    // Hammer
+    const hammer = BABYLON.MeshBuilder.CreateBox("hammer", { width: 0.1, height: 0.1, depth: 0.4 }, scene);
+    hammer.material = new BABYLON.StandardMaterial("hammerMat", scene);
+    hammer.material.diffuseColor = new BABYLON.Color3(0.3, 0.3, 0.3);
+    hammer.position.set(-8, 1.1, 0);
+    hammer.parent = hammerStation;
+
+    // Nail
+    const nail = BABYLON.MeshBuilder.CreateCylinder("nail", { height: 0.3, diameter: 0.05 }, scene);
+    nail.material = new BABYLON.StandardMaterial("nailMat", scene);
+    nail.material.diffuseColor = new BABYLON.Color3(0.5, 0.5, 0.5);
+    nail.position.set(-8, 1.05, 0.3);
+    nail.parent = hammerStation;
+
+    // XR setup
+    const xrHelper = await scene.createDefaultXRExperienceAsync({
+        uiOptions: { sessionMode: "immersive-vr" },
+    });
+
+    // Disable non-XR camera
+    xrHelper.baseExperience.onStateChangedObservable.add((state) => {
+        if (state === BABYLON.WebXRState.IN_XR) {
+            scene.activeCamera = null;
+        }
+    });
+
+    // Teleportation
+    xrHelper.teleportation = await xrHelper.baseExperience.featuresManager.enableFeature(
+        BABYLON.WebXRFeatureName.TELEPORTATION,
+        "latest",
+        {
+            xrInput: xrHelper.input,
+            floorMeshes: [ground],
+        }
+    );
+
+    // Controller logic
     xrHelper.input.onControllerAddedObservable.add((controller) => {
-        controller.onMotionControllerInitObservable.add((motionController) => {
-            controller.onMeshLoadedObservable.add(() => {
-                const squeezeComponent = motionController.getComponent("grasp");
-                if (squeezeComponent) {
-                    squeezeComponent.onButtonStateChangedObservable.add(() => {
-                        if (squeezeComponent.pressed) {
-                            const controllerPosition = controller.grip ? controller.grip.position : controller.pointer.position;
-                            const distance = Vector3.Distance(controllerPosition, saw.position);
-                            if (distance < 0.5) {
-                                // Simulate cutting the plank
-                                plank.scaling.z *= 0.5;
-                                plank.position.z -= 0.5;
+        const motionController = controller.motionController;
+        const grip = controller.grip;
+
+        if (motionController && grip) {
+            const trigger = motionController.getComponent("xr-standard-trigger");
+            let heldMesh = null;
+
+            trigger.onButtonStateChangedObservable.add(() => {
+                if (trigger.pressed) {
+                    // Grab
+                    if (!heldMesh) {
+                        const checkGrabbable = [...woodPile, blade, hammer, wire];
+                        for (const mesh of checkGrabbable) {
+                            const gripPos = grip.getAbsolutePosition();
+                            const meshPos = mesh.getAbsolutePosition();
+                            if (BABYLON.Vector3.Distance(gripPos, meshPos) < 0.3) {
+                                mesh.setParent(grip);
+                                heldMesh = mesh;
+                                break;
                             }
                         }
-                    });
+                    } else {
+                        // Nail
+                        if (heldMesh === hammer) {
+                            const distToNail = BABYLON.Vector3.Distance(nail.getAbsolutePosition(), grip.getAbsolutePosition());
+                            if (distToNail < 0.3 && nail.scaling.y > 0.1) {
+                                nail.scaling.y -= 0.05;
+                                nail.position.y -= 0.025;
+                            }
+                        }
+
+                        // Wire
+                        if (heldMesh === wire) {
+                            wire.material.diffuseColor = new BABYLON.Color3(0, 1, 0);
+                        }
+
+                        // Cutting wood
+                        if (woodPile.includes(heldMesh)) {
+                            const distToBlade = BABYLON.Vector3.Distance(heldMesh.getAbsolutePosition(), blade.getAbsolutePosition());
+                            if (distToBlade < 0.3) {
+                                const pos = heldMesh.getAbsolutePosition();
+                                const newWidth = heldMesh.scaling.x * 0.5;
+
+                                const left = BABYLON.MeshBuilder.CreateBox("plank_left", { width: newWidth * 1.5, height: 0.1, depth: 0.3 }, scene);
+                                left.material = plankMaterial;
+                                left.position = new BABYLON.Vector3(pos.x - 0.4, pos.y, pos.z);
+                                left.parent = woodStation;
+
+                                const right = BABYLON.MeshBuilder.CreateBox("plank_right", { width: newWidth * 1.5, height: 0.1, depth: 0.3 }, scene);
+                                right.material = plankMaterial;
+                                right.position = new BABYLON.Vector3(pos.x + 0.4, pos.y, pos.z);
+                                right.parent = woodStation;
+
+                                heldMesh.dispose();
+                                woodPile.splice(woodPile.indexOf(heldMesh), 1);
+                                heldMesh = null;
+                            }
+                        }
+                    }
+                } else {
+                    // Release
+                    if (heldMesh) {
+                        heldMesh.setParent(null);
+                        heldMesh = null;
+                    }
                 }
             });
-        });
+        }
+    });
+
+    return scene;
+};
+
+createScene().then((scene) => {
+    engine.runRenderLoop(() => {
+        scene.render();
     });
 });
 
-engine.runRenderLoop(() => {
-    scene.render();
+window.addEventListener("resize", () => {
+    engine.resize();
 });
