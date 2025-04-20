@@ -3,7 +3,7 @@ const engine = new BABYLON.Engine(canvas, true);
 
 const createScene = async function () {
     const scene = new BABYLON.Scene(engine);
-    scene.clearColor = new BABYLON.Color3(0.5, 0.5, 0.5); // grey background
+    scene.clearColor = new BABYLON.Color3(0.5, 0.5, 0.5);
 
     // Skybox
     const skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 1000.0 }, scene);
@@ -17,7 +17,7 @@ const createScene = async function () {
     skybox.material = skyboxMaterial;
 
     // Camera
-    const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, 15, new BABYLON.Vector3(0, 0, 0));
+    const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, 15, new BABYLON.Vector3(0, 0, 0), scene);
     camera.attachControl(canvas, true);
 
     // Light
@@ -137,6 +137,13 @@ const createScene = async function () {
         uiOptions: { sessionMode: "immersive-vr" },
     });
 
+    // Disable non-XR camera
+    xrHelper.baseExperience.onStateChangedObservable.add((state) => {
+        if (state === BABYLON.WebXRState.IN_XR) {
+            scene.activeCamera = null;
+        }
+    });
+
     // Teleportation
     xrHelper.teleportation = await xrHelper.baseExperience.featuresManager.enableFeature(
         BABYLON.WebXRFeatureName.TELEPORTATION,
@@ -147,7 +154,7 @@ const createScene = async function () {
         }
     );
 
-    // Controller
+    // Controller logic
     xrHelper.input.onControllerAddedObservable.add((controller) => {
         const motionController = controller.motionController;
         const grip = controller.grip;
@@ -192,7 +199,6 @@ const createScene = async function () {
                                 const pos = heldMesh.getAbsolutePosition();
                                 const newWidth = heldMesh.scaling.x * 0.5;
 
-                                // Breaks object into two
                                 const left = BABYLON.MeshBuilder.CreateBox("plank_left", { width: newWidth * 1.5, height: 0.1, depth: 0.3 }, scene);
                                 left.material = plankMaterial;
                                 left.position = new BABYLON.Vector3(pos.x - 0.4, pos.y, pos.z);
@@ -210,6 +216,7 @@ const createScene = async function () {
                         }
                     }
                 } else {
+                    // Release
                     if (heldMesh) {
                         heldMesh.setParent(null);
                         heldMesh = null;
