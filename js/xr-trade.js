@@ -16,11 +16,9 @@ const createScene = async function () {
     skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
     skybox.material = skyboxMaterial;
 
-    // Camera
-    const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, 15, new BABYLON.Vector3(0, 0, 0), scene);
+    // Camera and lighting
+    const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, 15, new BABYLON.Vector3(0, 0, 0));
     camera.attachControl(canvas, true);
-
-    // Light
     const light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);
     light.intensity = 0.7;
 
@@ -33,34 +31,30 @@ const createScene = async function () {
     ground.material = grassMaterial;
     ground.receiveShadows = true;
 
-    // Table material
+    // Table mat
     const tableMat = new BABYLON.StandardMaterial("tableMat", scene);
     tableMat.diffuseTexture = new BABYLON.Texture("https://assets.babylonjs.com/textures/wood.jpg", scene);
 
-    // Station creation
+    // Helper to create a station with a label
     function createStation(scene, name, position, titleText) {
         const station = new BABYLON.TransformNode(name, scene);
         station.position = position;
-
         const titlePlane = BABYLON.MeshBuilder.CreatePlane(`${name}_title`, { width: 2, height: 0.5 }, scene);
         titlePlane.position = new BABYLON.Vector3(0, 2.5, 0);
         titlePlane.parent = station;
-
         const titleMat = new BABYLON.StandardMaterial(`${name}_mat`, scene);
         const dynamicTexture = new BABYLON.DynamicTexture(`${name}_textTex`, { width: 512, height: 256 }, scene, true);
         dynamicTexture.drawText(titleText, 50, 150, "bold 60px Arial", "white", "transparent", true);
         titleMat.diffuseTexture = dynamicTexture;
         titlePlane.material = titleMat;
-
         return station;
     }
 
-    // Training stations
     const woodStation = createStation(scene, "woodStation", new BABYLON.Vector3(0, 0, 0), "Wood Cutting");
     const wiringStation = createStation(scene, "wiringStation", new BABYLON.Vector3(8, 0, 0), "Wiring Test");
     const hammerStation = createStation(scene, "hammerStation", new BABYLON.Vector3(-8, 0, 0), "Nail Hammering");
 
-    // Cutting table
+    // Table
     const tableTop = BABYLON.MeshBuilder.CreateBox("tableTop", { width: 2, height: 0.2, depth: 1 }, scene);
     tableTop.position.set(0, 0.9, 0);
     tableTop.material = tableMat;
@@ -80,25 +74,21 @@ const createScene = async function () {
     createLeg(-0.9, 0.4);
     createLeg(0.9, 0.4);
 
-    // Saw blade
+    // Saw blade/ handle
     const blade = BABYLON.MeshBuilder.CreateBox("blade", { width: 0.05, height: 0.05, depth: 0.5 }, scene);
     blade.material = new BABYLON.StandardMaterial("bladeMat", scene);
     blade.material.diffuseColor = new BABYLON.Color3(0.8, 0.8, 0.8);
     blade.position.set(0, 1.1, 1);
     blade.parent = woodStation;
-
-    // Saw handle
     const handle = BABYLON.MeshBuilder.CreateBox("handle", { width: 0.1, height: 0.1, depth: 0.2 }, scene);
     handle.material = new BABYLON.StandardMaterial("handleMat", scene);
     handle.material.diffuseColor = new BABYLON.Color3(0.2, 0.1, 0.05);
     handle.position.set(0, -0.05, -0.15);
     handle.parent = blade;
 
-    // Plank material
+    // Wood pile
     const plankMaterial = new BABYLON.StandardMaterial("plankMaterial", scene);
     plankMaterial.diffuseColor = new BABYLON.Color3(0.7, 0.5, 0.3);
-
-    // Wood pile
     const woodPile = [];
     for (let row = 0; row < 2; row++) {
         for (let col = 0; col < 3; col++) {
@@ -111,7 +101,7 @@ const createScene = async function () {
         }
     }
 
-    // Wiring cylinder
+    // Wire
     const wire = BABYLON.MeshBuilder.CreateCylinder("wire", { height: 1, diameter: 0.05 }, scene);
     wire.material = new BABYLON.StandardMaterial("wireMat", scene);
     wire.material.diffuseColor = new BABYLON.Color3(0.1, 0.1, 0.1);
@@ -132,17 +122,8 @@ const createScene = async function () {
     nail.position.set(-8, 1.05, 0.3);
     nail.parent = hammerStation;
 
-    // XR setup
-    const xrHelper = await scene.createDefaultXRExperienceAsync({
-        uiOptions: { sessionMode: "immersive-vr" },
-    });
-
-    // Disable non-XR camera
-    xrHelper.baseExperience.onStateChangedObservable.add((state) => {
-        if (state === BABYLON.WebXRState.IN_XR) {
-            scene.activeCamera = null;
-        }
-    });
+    // Enable WebXR
+    const xrHelper = await scene.createDefaultXRExperienceAsync({ uiOptions: { sessionMode: "immersive-vr" } });
 
     // Teleportation
     xrHelper.teleportation = await xrHelper.baseExperience.featuresManager.enableFeature(
@@ -154,7 +135,7 @@ const createScene = async function () {
         }
     );
 
-    // Controller logic
+    // VR Controller Interaction
     xrHelper.input.onControllerAddedObservable.add((controller) => {
         const motionController = controller.motionController;
         const grip = controller.grip;
@@ -165,20 +146,16 @@ const createScene = async function () {
 
             trigger.onButtonStateChangedObservable.add(() => {
                 if (trigger.pressed) {
-                    // Grab
                     if (!heldMesh) {
                         const checkGrabbable = [...woodPile, blade, hammer, wire];
                         for (const mesh of checkGrabbable) {
-                            const gripPos = grip.getAbsolutePosition();
-                            const meshPos = mesh.getAbsolutePosition();
-                            if (BABYLON.Vector3.Distance(gripPos, meshPos) < 0.3) {
+                            if (BABYLON.Vector3.Distance(mesh.getAbsolutePosition(), grip.getAbsolutePosition()) < 0.3) {
                                 mesh.setParent(grip);
                                 heldMesh = mesh;
                                 break;
                             }
                         }
                     } else {
-                        // Nail
                         if (heldMesh === hammer) {
                             const distToNail = BABYLON.Vector3.Distance(nail.getAbsolutePosition(), grip.getAbsolutePosition());
                             if (distToNail < 0.3 && nail.scaling.y > 0.1) {
@@ -187,28 +164,24 @@ const createScene = async function () {
                             }
                         }
 
-                        // Wire
+                        // Wire interaction
                         if (heldMesh === wire) {
                             wire.material.diffuseColor = new BABYLON.Color3(0, 1, 0);
                         }
 
-                        // Cutting wood
+                        // Cut plank in half
                         if (woodPile.includes(heldMesh)) {
                             const distToBlade = BABYLON.Vector3.Distance(heldMesh.getAbsolutePosition(), blade.getAbsolutePosition());
                             if (distToBlade < 0.3) {
                                 const pos = heldMesh.getAbsolutePosition();
-                                const newWidth = heldMesh.scaling.x * 0.5;
-
-                                const left = BABYLON.MeshBuilder.CreateBox("plank_left", { width: newWidth * 1.5, height: 0.1, depth: 0.3 }, scene);
-                                left.material = plankMaterial;
+                                const left = BABYLON.MeshBuilder.CreateBox("plank_left", { width: 0.75, height: 0.1, depth: 0.3 }, scene);
+                                const right = BABYLON.MeshBuilder.CreateBox("plank_right", { width: 0.75, height: 0.1, depth: 0.3 }, scene);
                                 left.position = new BABYLON.Vector3(pos.x - 0.4, pos.y, pos.z);
-                                left.parent = woodStation;
-
-                                const right = BABYLON.MeshBuilder.CreateBox("plank_right", { width: newWidth * 1.5, height: 0.1, depth: 0.3 }, scene);
-                                right.material = plankMaterial;
                                 right.position = new BABYLON.Vector3(pos.x + 0.4, pos.y, pos.z);
+                                left.material = plankMaterial;
+                                right.material = plankMaterial;
+                                left.parent = woodStation;
                                 right.parent = woodStation;
-
                                 heldMesh.dispose();
                                 woodPile.splice(woodPile.indexOf(heldMesh), 1);
                                 heldMesh = null;
@@ -216,9 +189,20 @@ const createScene = async function () {
                         }
                     }
                 } else {
-                    // Release
                     if (heldMesh) {
                         heldMesh.setParent(null);
+
+                        if (heldMesh === wire) {
+                            wire.material.diffuseColor = new BABYLON.Color3(0.1, 0.1, 0.1);
+                        }
+
+                        if (woodPile.includes(heldMesh)) {
+                            new BABYLON.PhysicsImpostor(heldMesh, BABYLON.PhysicsImpostor.BoxImpostor, {
+                                mass: 1,
+                                restitution: 0.3
+                            }, scene);
+                        }
+
                         heldMesh = null;
                     }
                 }
@@ -230,11 +214,6 @@ const createScene = async function () {
 };
 
 createScene().then((scene) => {
-    engine.runRenderLoop(() => {
-        scene.render();
-    });
-});
-
-window.addEventListener("resize", () => {
-    engine.resize();
+    engine.runRenderLoop(() => scene.render());
+    window.addEventListener("resize", () => engine.resize());
 });
