@@ -35,7 +35,6 @@ const createScene = async function () {
     const tableMat = new BABYLON.StandardMaterial("tableMat", scene);
     tableMat.diffuseTexture = new BABYLON.Texture("https://assets.babylonjs.com/textures/wood.jpg", scene);
 
-    // Helper to create a station with a label
     function createStation(scene, name, position, titleText) {
         const station = new BABYLON.TransformNode(name, scene);
         station.position = position;
