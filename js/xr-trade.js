@@ -54,7 +54,7 @@ const createScene = async function () {
     const wiringStation = createStation(scene, "wiringStation", new BABYLON.Vector3(8, 0, 0), "Wiring Test");
     const hammerStation = createStation(scene, "hammerStation", new BABYLON.Vector3(-8, 0, 0), "Nail Hammering");
 
-    // Table
+    // Table for wood station
     const tableTop = BABYLON.MeshBuilder.CreateBox("tableTop", { width: 2, height: 0.2, depth: 1 }, scene);
     tableTop.position.set(0, 0.9, 0);
     tableTop.material = tableMat;
@@ -73,6 +73,40 @@ const createScene = async function () {
     createLeg(0.9, -0.4);
     createLeg(-0.9, 0.4);
     createLeg(0.9, 0.4);
+
+    // Table for wiring station
+    const wiringTableTop = BABYLON.MeshBuilder.CreateBox("wiringTableTop", { width: 2, height: 0.2, depth: 1 }, scene);
+    wiringTableTop.position.set(0, 0.9, 0);
+    wiringTableTop.material = tableMat;
+    wiringTableTop.parent = wiringStation;
+    
+    const createWiringLeg = (x, z) => {
+        const leg = BABYLON.MeshBuilder.CreateBox("wiringLeg", { width: legSize, height: legHeight, depth: legSize }, scene);
+        leg.position.set(x, legHeight / 2, z);
+        leg.material = tableMat;
+        leg.parent = wiringStation;
+    };
+    createWiringLeg(-0.9, -0.4);
+    createWiringLeg(0.9, -0.4);
+    createWiringLeg(-0.9, 0.4);
+    createWiringLeg(0.9, 0.4);
+    
+    // Table for hammer station
+    const hammerTableTop = BABYLON.MeshBuilder.CreateBox("hammerTableTop", { width: 2, height: 0.2, depth: 1 }, scene);
+    hammerTableTop.position.set(0, 0.9, 0);
+    hammerTableTop.material = tableMat;
+    hammerTableTop.parent = hammerStation;
+    
+    const createHammerLeg = (x, z) => {
+        const leg = BABYLON.MeshBuilder.CreateBox("hammerLeg", { width: legSize, height: legHeight, depth: legSize }, scene);
+        leg.position.set(x, legHeight / 2, z);
+        leg.material = tableMat;
+        leg.parent = hammerStation;
+    };
+    createHammerLeg(-0.9, -0.4);
+    createHammerLeg(0.9, -0.4);
+    createHammerLeg(-0.9, 0.4);
+    createHammerLeg(0.9, 0.4);
 
     // Saw blade/ handle
     const blade = BABYLON.MeshBuilder.CreateBox("blade", { width: 0.05, height: 0.05, depth: 0.5 }, scene);
